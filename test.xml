@@ -1,0 +1,19 @@
+<batch-commands>
+<global-options>
+
+        <user>admin</user>
+		<password>admin</password>
+
+        
+
+    </global-options>
+
+	<addsvndiffs>
+		<upload-comment>ffd</upload-comment>
+		<review>new</review>
+		<user-diff-arg>-c 173290</user-diff-arg>
+		</addsvndiffs>
+		
+	
+</batch-commands>
+
