@@ -2,7 +2,7 @@
 <global-options>
 
         <user>admin</user>
-		<password>admin</password>
+		<password>admin1</password>
 
         
 
@@ -16,4 +16,5 @@
 		
 	
 </batch-commands>
+
 
