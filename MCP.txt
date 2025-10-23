@@ -1,0 +1,177 @@
+MCP
+
+Prerequisite
+
+Node.js 20+ and npm
+Access to SmartBear products (BugSnag, Reflect, API Hub, QMetry, or Zephyr)
+Valid API tokens for the products you want to integrate
+
+1 Development Setup
+	git clone https://github.com/SmartBear/smartbear-mcp.git
+	cd smartbear-mcp
+
+2 Install Dependencies
+
+	Make sure you have a current version of Node.js and then run: 
+	npm install
+
+3 Making Changes
+	To build the files for local testing, run: 
+	npm run build
+
+MCP Inspector
+	The MCP inspector is a developer tool for testing and debugging MCP servers.
+	To get up and running right away with the UI, just execute the following:
+
+npx @modelcontextprotocol/inspector
+	The server will start up and the UI will be accessible at http://localhost:6274.
+
+npx @modelcontextprotocol/inspector -e COLLAB_BASE_URL=https://a544725e8e6c.ngrok-free.app -e COLLAB_USERNAME=admin -e COLLAB_LOGIN_TICKET=ac17592b3206b0a204936540383fb789 node C:\\repo\\smartbear-mcp\\dist\\index.js
+	
+register(
+      {
+        title: "ReviewService Action",
+        summary: "Invoke any ReviewService method by name and arguments. For finishReviewPhase and waitOnPhase, provide reviewId (required) and until (optional, defaults to 'ANY').",
+        zodSchema: z.object({
+          action: z.enum([
+            "moveReviewToAnnotatePhase",
+            "cancel",
+            "finishReviewPhase",
+            "reject",
+            "reopen",
+            "uncancel",
+            "waitOnPhase"
+          ]),
+          args: z.record(z.any())
+        })
+      },
+      async (params, extra) => {
+        try {
+          const { action, args } = params;
+          // For finishReviewPhase and waitOnPhase, set until to 'ANY' if not provided
+          if ((action === "finishReviewPhase" || action === "waitOnPhase") && (!args.until)) {
+            args.until = "ANY";
+          }
+          const commands = [{ command: `ReviewService.${action}`, args }];
+          const result = await this.call(commands);
+          return {
+            content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+          };
+        } catch (err) {
+          return {
+            content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // getReviews tool
+    register({
+      title: "Get Collaborator Reviews",
+      summary: "Retrieves reviews from Collaborator using ReviewService.getReviews. All parameters are optional and only provided ones are sent.",
+      zodSchema: z.object({
+        login: z.string().optional().describe("Collaborator username to filter reviews."),
+        role: z.string().optional().describe("Role to filter reviews (e.g., AUTHOR)."),
+        creator: z.boolean().optional().describe("Whether to filter by creator."),
+        reviewPhase: z.string().optional().describe("Review phase to filter (e.g., PLANNING)."),
+        fullInfo: z.boolean().optional().describe("Whether to retrieve full review info."),
+        fromDate: z.string().optional().describe('Minimal creation date in format "yyyy-MM-dd"'),
+        toDate: z.string().optional().describe('Maximal creation date in format "yyyy-MM-dd"')
+      })
+    }, async (args, extra) => {
+      try {
+        // Only include provided fields in reviewArgs
+        const reviewArgs: any = {};
+        if (args.login !== undefined) reviewArgs.login = args.login;
+        if (args.role !== undefined) reviewArgs.role = args.role;
+        if (args.creator !== undefined) reviewArgs.creator = args.creator;
+        if (args.reviewPhase !== undefined) reviewArgs.reviewPhase = args.reviewPhase;
+        if (args.fullInfo !== undefined) reviewArgs.fullInfo = args.fullInfo;
+        if (args.fromDate !== undefined) reviewArgs.fromDate = args.fromDate;
+        if (args.toDate !== undefined) reviewArgs.toDate = args.toDate;
+        const commands = [
+          {
+            command: "ReviewService.getReviews",
+            args: reviewArgs
+          }
+        ];
+        const result = await this.call(commands);
+        return {
+          content: [{ type: "text", text: JSON.stringify(result, null, 2) }]
+        };
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
+          isError: true
+        };
+      }
+    });
+
+
+Use Case 1: Gain Complete Visibility into Your Reviews
+
+used ReviewService.getReviews
+
+can you get all the review created by admin?
+It ran Get Collaborator reviews with below input
+{
+  "login": "admin",
+  "role": "AUTHOR",
+  "reviewPhase": "PLANNING",
+  "creator": true,
+  "fullInfo": false
+}
+
+can you get the reviews of admin which are in Annotating phase?
+
+It ran Get Collaborator reviews with below input
+{
+  "login": "admin",
+  "role": "AUTHOR",
+  "reviewPhase": "ANNOTATING",
+  "creator": true,
+  "fullInfo": false
+}
+
+can you get me all the reviews where zahid is reviewer?
+It ran Get Collaborator reviews with below input
+{
+  "login": "zahid",
+  "role": "REVIEWER",
+  "creator": false,
+  "fullInfo": false,
+  "reviewPhase": "PLANNING"
+}
+
+can you get me all the reviews in inspecting phase where zahid is reviewer?
+It ran Get Collaborator reviews with below input
+{
+  "login": "zahid",
+  "role": "REVIEWER",
+  "reviewPhase": "INSPECTING",
+  "creator": false,
+  "fullInfo": false
+}
+
+can you get me all the reviews where admin is involved either as author or reviewer?
+It ran tool twice 
+{
+  "login": "admin",
+  "role": "AUTHOR",
+  "creator": true,
+  "fullInfo": false,
+  "reviewPhase": "PLANNING"
+}
+{
+  "login": "admin",
+  "role": "REVIEWER",
+  "creator": false,
+  "fullInfo": false,
+  "reviewPhase": "PLANNING"
+}
+
+get me all review for user
+
+
+
